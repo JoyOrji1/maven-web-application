@@ -1,0 +1,29 @@
+node {
+    def mavenHome = tool name: 'Maven_Home'
+    stage('1CloneCode') {
+        git 'https://github.com/JoyOrji1/maven-web-application.git'
+} 
+    stage('2Test&Build'){
+    sh "${mavenHome}/bin/mvn install"
+}
+stage('3CodeQuality'){
+    sh "${mavenHome}/bin/mvn sonar:sonar"
+}
+stage('4UploadArtifacts'){
+    sh "${mavenHome}/bin/mvn deploy"
+ } 
+ stage('5deploy_uat'){
+     deploy adapters: [tomcat9(credentialsId: 'tomcat-credential', path: '', url: 'http://50.18.0.40:8080/')], contextPath: 'uatapp', war: 'target/*war'
+ }
+ 
+ stage('7deploy_prod'){
+     deploy adapters: [tomcat9(credentialsId: 'tomcat-credential', path: '', url: 'http://50.18.0.40:8080/')], contextPath: 'uatapp', war: 'target/*war'
+ }
+ stage('8Notification'){
+     emailext body: '''Build Status for frontend application.
+
+Regards,
+Joy Orji''', recipientProviders: [buildUser(), developers(), contributor()], subject: 'Build Status', to: 'chiasa602@gmail.com'
+ }
+}
+
